@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Daily Hour Calendar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen">
+    <div class="login-box">
+      <div class="login-icon">🗓️</div>
+      <h1>Daily Calendar</h1>
+      <p>Your private daily planner</p>
+      <button id="google-signin-btn" onclick="signInWithGoogle()">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 002.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 01-7.18-2.54H1.83v2.07A8 8 0 008.98 17z"/><path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 010-3.04V5.41H1.83a8 8 0 000 7.18l2.67-2.07z"/><path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 001.83 5.4L4.5 7.49a4.77 4.77 0 014.48-3.3z"/></svg>
+        Sign in with Google
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="app" style="display:none">
+
+    <!-- HEADER -->
+    <header>
+      <div class="header-top">
+        <span class="app-title">🗓️ DayCal</span>
+        <button class="signout-btn" onclick="signOut()">Sign out</button>
+      </div>
+      <div class="date-nav">
+        <button class="nav-btn" onclick="changeDay(-1)">‹</button>
+        <div class="date-display">
+          <div id="date-label" class="date-label"></div>
+          <div id="date-sub" class="date-sub"></div>
+        </div>
+        <button class="nav-btn" onclick="changeDay(1)">›</button>
+      </div>
+    </header>
+
+    <!-- TASK TAG BOX -->
+    <section class="task-box-section">
+      <div class="section-label">Tags</div>
+      <div id="tag-list" class="tag-list"></div>
+      <button class="add-tag-btn" onclick="scrollToAddTask()">+ Add Task</button>
+    </section>
+
+    <!-- CALENDAR GRID -->
+    <section class="calendar-section">
+      <div id="calendar-grid" class="calendar-grid"></div>
+    </section>
+
+    <!-- STATS: CUMULATIVE -->
+    <section class="stats-section" id="cumulative-stats">
+      <div class="stats-title">Cumulative Productivity</div>
+      <div class="stats-subtitle">All time totals</div>
+      <div id="cumulative-circles" class="circles-grid"></div>
+    </section>
+
+    <!-- STATS: TODAY -->
+    <section class="stats-section" id="today-stats">
+      <div class="stats-title" id="today-stats-title">Today's Productivity</div>
+      <div class="stats-subtitle" id="today-stats-sub"></div>
+      <div id="today-circles" class="circles-grid"></div>
+    </section>
+
+    <!-- ADD TASK FORM -->
+    <section class="add-task-section" id="add-task-section">
+      <div class="section-label">Add New Task</div>
+      <form onsubmit="return false;">
+        <input type="text" id="new-task-name" placeholder="Task name..." class="task-input" />
+        <div class="form-group">
+          <label>Statistics scope:</label>
+          <div class="radio-group">
+            <label><input type="radio" name="stat-scope" value="cumulative" /> Cumulative only</label>
+            <label><input type="radio" name="stat-scope" value="daily" /> Daily only</label>
+            <label><input type="radio" name="stat-scope" value="both" checked /> Both</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Cumulative category:</label>
+          <select id="cumulative-cat" class="task-select">
+            <option value="wasted">Hours Wasted</option>
+            <option value="productive">Productive Hours</option>
+            <option value="analyzation">Analyzation</option>
+            <option value="workouts">Workouts/Stretches</option>
+            <option value="sat-quietly">Sat Quietly</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Daily category:</label>
+          <select id="daily-cat" class="task-select">
+            <option value="wasted">Hours Wasted Today</option>
+            <option value="productive">Productive Hours Today</option>
+            <option value="analyzation">Analyzation Today</option>
+            <option value="workouts">Workouts/Stretches</option>
+            <option value="sat-quietly">Sat Quietly Today</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <button class="save-task-btn" onclick="addCustomTask()">Save Task Type</button>
+      </form>
+
+      <div class="form-group" style="margin-top:20px">
+        <div class="section-label" style="margin-bottom:8px">Add Custom Category</div>
+        <input type="text" id="new-cat-name" placeholder="Category name..." class="task-input" />
+        <div class="radio-group">
+          <label><input type="radio" name="cat-scope" value="cumulative" /> Cumulative</label>
+          <label><input type="radio" name="cat-scope" value="daily" /> Daily</label>
+          <label><input type="radio" name="cat-scope" value="both" checked /> Both</label>
+        </div>
+        <button class="save-task-btn" onclick="addCustomCategory()">Add Category</button>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- CONFIRM MODAL -->
+  <div id="confirm-modal" class="modal-overlay" style="display:none">
+    <div class="modal-box">
+      <p id="modal-msg">Remove this tag?</p>
+      <div class="modal-btns">
+        <button class="modal-ok" onclick="confirmRemove()">OK</button>
+        <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { firebaseConfig } from "./firebase-config.js";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    const provider = new GoogleAuthProvider();
+
+    // ─── STATE ───
+    let currentUser = null;
+    let currentDateStr = todayStr();
+    let selectedTag = null;
+    let pendingRemove = null; // { dateStr, slotKey, tagName }
+    let calendarData = {}; // { dateStr: { slotKey: [tags] } }
+
+    function todayStr() {
+      return new Date().toISOString().split('T')[0];
+    }
+
+    function formatDisplayDate(str) {
+      const d = new Date(str + 'T12:00:00');
+      return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    }
+
+    // ─── AUTH ───
+    window.signInWithGoogle = async () => {
+      try { await signInWithPopup(auth, provider); } catch(e) { alert(e.message); }
+    };
+    window.signOut = async () => {
+      await fbSignOut(auth);
+      location.reload();
+    };
+
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        currentUser = user;
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        init();
+      } else {
+        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('app').style.display = 'none';
+      }
+    });
+
+    // ─── INIT ───
+    function init() {
+      renderTags();
+      renderCalendar();
+      updateDateDisplay();
+      listenData();
+    }
+
+    function listenData() {
+      const r = ref(db, `users/${currentUser.uid}`);
+      onValue(r, snap => {
+        const data = snap.val() || {};
+        calendarData = data.calendar || {};
+        renderCalendar();
+        renderStats();
+      });
+    }
+
+    // ─── DATE NAV ───
+    window.changeDay = (dir) => {
+      const d = new Date(currentDateStr + 'T12:00:00');
+      d.setDate(d.getDate() + dir);
+      const newStr = d.toISOString().split('T')[0];
+      if (newStr > todayStr()) return; // can't go to future
+      currentDateStr = newStr;
+      updateDateDisplay();
+      renderCalendar();
+      renderStats();
+    };
+
+    function updateDateDisplay() {
+      const isToday = currentDateStr === todayStr();
+      document.getElementById('date-label').textContent = isToday ? 'Today' : formatDisplayDate(currentDateStr).split(',')[0];
+      document.getElementById('date-sub').textContent = isToday
+        ? formatDisplayDate(currentDateStr)
+        : formatDisplayDate(currentDateStr);
+      const nextBtn = document.querySelectorAll('.nav-btn')[1];
+      nextBtn.style.opacity = currentDateStr === todayStr() ? '0.3' : '1';
+    }
+
+    // ─── TASKS & TAGS ───
+    const DEFAULT_TASKS = [
+      { name: 'Mobile use',     cumCat: 'wasted',      dayCat: 'wasted',      color: '#e05c5c' },
+      { name: 'TikTok',         cumCat: 'wasted',      dayCat: 'wasted',      color: '#e07a5c' },
+      { name: 'Pinterest',      cumCat: 'wasted',      dayCat: 'wasted',      color: '#e0955c' },
+      { name: 'Sat quietly',    cumCat: 'sat-quietly', dayCat: 'sat-quietly', color: '#a8bfc9' },
+      { name: 'Sleep',          cumCat: 'other',       dayCat: 'other',       color: '#7b8cde' },
+      { name: 'Ate',            cumCat: 'other',       dayCat: 'other',       color: '#c9b06e' },
+      { name: 'Workout',        cumCat: 'workouts',    dayCat: 'workouts',    color: '#5cb85c' },
+      { name: 'Stretches',      cumCat: 'workouts',    dayCat: 'workouts',    color: '#5cb88a' },
+      { name: 'Tiny workout',   cumCat: 'workouts',    dayCat: 'workouts',    color: '#5cb8b0' },
+      { name: 'Study',          cumCat: 'productive',  dayCat: 'productive',  color: '#3da8e0' },
+      { name: 'Reading',        cumCat: 'productive',  dayCat: 'productive',  color: '#5b8de0' },
+      { name: 'AI research',    cumCat: 'productive',  dayCat: 'productive',  color: '#8b6de0' },
+      { name: 'AI analyzation', cumCat: 'analyzation', dayCat: 'analyzation', color: '#b06de0' },
+    ];
+
+    function getTaskDefs() {
+      const stored = JSON.parse(localStorage.getItem('customTasks') || '[]');
+      return [...DEFAULT_TASKS, ...stored];
+    }
+
+    function getTaskColor(name) {
+      const t = getTaskDefs().find(t => t.name === name);
+      return t ? t.color : '#888';
+    }
+
+    function renderTags() {
+      const list = document.getElementById('tag-list');
+      list.innerHTML = '';
+      getTaskDefs().forEach(task => {
+        const btn = document.createElement('button');
+        btn.className = 'tag-btn';
+        btn.textContent = task.name;
+        btn.style.setProperty('--tag-color', task.color);
+        btn.onclick = () => selectTag(task.name, btn);
+        list.appendChild(btn);
+      });
+    }
+
+    function selectTag(name, el) {
+      document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+      if (selectedTag === name) {
+        selectedTag = null;
+      } else {
+        selectedTag = name;
+        el.classList.add('active');
+      }
+    }
+
+    // ─── CALENDAR ───
+    function generateSlots() {
+      const slots = [];
+      for (let h = 0; h < 24; h++) {
+        ['00','30'].forEach(m => {
+          const label = `${String(h).padStart(2,'0')}:${m}`;
+          slots.push(label);
+        });
+      }
+      return slots;
+    }
+
+    function renderCalendar() {
+      const grid = document.getElementById('calendar-grid');
+      grid.innerHTML = '';
+      const slots = generateSlots();
+      const dayData = calendarData[currentDateStr] || {};
+
+      slots.forEach(slot => {
+        const row = document.createElement('div');
+        row.className = 'cal-row';
+
+        const time = document.createElement('div');
+        time.className = 'cal-time';
+        time.textContent = slot;
+
+        const cell = document.createElement('div');
+        cell.className = 'cal-cell';
+        const tags = dayData[slot] || [];
+
+        tags.forEach(tag => {
+          const chip = document.createElement('span');
+          chip.className = 'cal-tag-chip';
+          chip.textContent = tag;
+          chip.style.background = getTaskColor(tag);
+          chip.ondblclick = () => promptRemove(slot, tag);
+          cell.appendChild(chip);
+        });
+
+        cell.onclick = (e) => {
+          if (e.target.classList.contains('cal-tag-chip')) return;
+          if (!selectedTag) return;
+          addTagToSlot(slot, selectedTag);
+        };
+
+        row.appendChild(time);
+        row.appendChild(cell);
+        grid.appendChild(row);
+      });
+    }
+
+    async function addTagToSlot(slot, tag) {
+      const path = `users/${currentUser.uid}/calendar/${currentDateStr}/${slot}`;
+      const r = ref(db, path);
+      const snap = await get(r);
+      const existing = snap.val() || [];
+      if (!existing.includes(tag)) {
+        await set(r, [...existing, tag]);
+      }
+      // deselect tag
+      selectedTag = null;
+      document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+    }
+
+    function promptRemove(slot, tag) {
+      pendingRemove = { slot, tag };
+      document.getElementById('modal-msg').textContent = `Remove "${tag}" from ${slot}?`;
+      document.getElementById('confirm-modal').style.display = 'flex';
+    }
+
+    window.confirmRemove = async () => {
+      if (!pendingRemove) return;
+      const { slot, tag } = pendingRemove;
+      const path = `users/${currentUser.uid}/calendar/${currentDateStr}/${slot}`;
+      const r = ref(db, path);
+      const snap = await get(r);
+      const existing = snap.val() || [];
+      const updated = existing.filter(t => t !== tag);
+      await set(r, updated.length ? updated : null);
+      closeModal();
+    };
+
+    window.closeModal = () => {
+      document.getElementById('confirm-modal').style.display = 'none';
+      pendingRemove = null;
+    };
+
+    // ─── STATISTICS ───
+    const CUM_CATEGORIES = [
+      { key: 'wasted',      label: 'Hours Wasted',              color: '#e05c5c', tasks: ['Mobile use','TikTok','Pinterest'] },
+      { key: 'wasted-week', label: 'Wasted This Week',          color: '#e07a5c', tasks: ['Mobile use','TikTok','Pinterest'], period: 'week' },
+      { key: 'wasted-month',label: 'Wasted This Month',         color: '#e0955c', tasks: ['Mobile use','TikTok','Pinterest'], period: 'month' },
+      { key: 'productive',  label: 'Productive Hours',           color: '#3da8e0', tasks: ['Study','Reading','AI research'] },
+      { key: 'prod-week',   label: 'Productive This Week',      color: '#5b8de0', tasks: ['Study','Reading','AI research'], period: 'week' },
+      { key: 'prod-month',  label: 'Productive This Month',     color: '#8b6de0', tasks: ['Study','Reading','AI research'], period: 'month' },
+      { key: 'analyzation', label: 'AI Analyzation',            color: '#b06de0', tasks: ['AI analyzation'] },
+      { key: 'sat-quietly', label: 'Sat Quietly',               color: '#a8bfc9', tasks: ['Sat quietly'] },
+      { key: 'workouts',    label: 'Workouts / Stretches',      color: '#5cb85c', tasks: ['Workout','Stretches','Tiny workout'] },
+      { key: 'other',       label: 'Other',                     color: '#c9b06e', tasks: ['Ate','Sleep'] },
+    ];
+
+    const DAY_CATEGORIES = [
+      { key: 'wasted',      label: 'Hours Wasted Today',        color: '#e05c5c', tasks: ['Mobile use','TikTok','Pinterest'] },
+      { key: 'productive',  label: 'Productive Hours Today',    color: '#3da8e0', tasks: ['Study','Reading','AI research'] },
+      { key: 'analyzation', label: 'Analyzation Today',         color: '#b06de0', tasks: ['AI analyzation'] },
+      { key: 'workouts',    label: 'Workouts / Stretches',      color: '#5cb85c', tasks: ['Workout','Stretches','Tiny workout'] },
+      { key: 'sat-quietly', label: 'Sat Quietly Today',         color: '#a8bfc9', tasks: ['Sat quietly'] },
+      { key: 'other',       label: 'Other',                     color: '#c9b06e', tasks: ['Ate','Sleep'] },
+    ];
+
+    function countTasksInData(data, taskNames, period) {
+      const counts = {};
+      taskNames.forEach(t => counts[t] = 0);
+      const now = new Date();
+
+      Object.entries(data).forEach(([dateStr, slots]) => {
+        if (period) {
+          const d = new Date(dateStr + 'T12:00:00');
+          if (period === 'week') {
+            const weekAgo = new Date(now); weekAgo.setDate(weekAgo.getDate() - 7);
+            if (d < weekAgo) return;
+          } else if (period === 'month') {
+            const monthAgo = new Date(now); monthAgo.setMonth(monthAgo.getMonth() - 1);
+            if (d < monthAgo) return;
+          }
+        }
+        Object.values(slots).forEach(tags => {
+          if (!Array.isArray(tags)) return;
+          tags.forEach(tag => {
+            if (counts[tag] !== undefined) counts[tag]++;
+          });
+        });
+      });
+      return counts;
+    }
+
+    function countTasksForDay(daySlots, taskNames) {
+      const counts = {};
+      taskNames.forEach(t => counts[t] = 0);
+      Object.values(daySlots || {}).forEach(tags => {
+        if (!Array.isArray(tags)) return;
+        tags.forEach(tag => { if (counts[tag] !== undefined) counts[tag]++; });
+      });
+      return counts;
+    }
+
+    function renderStats() {
+      // CUMULATIVE
+      const cumEl = document.getElementById('cumulative-circles');
+      cumEl.innerHTML = '';
+      CUM_CATEGORIES.forEach(cat => {
+        const counts = countTasksInData(calendarData, cat.tasks, cat.period);
+        const total = Object.values(counts).reduce((a,b) => a+b, 0);
+        cumEl.appendChild(makeCircle(cat, counts, total));
+      });
+
+      // DAILY
+      const isToday = currentDateStr === todayStr();
+      document.getElementById('today-stats-title').textContent = isToday ? "Today's Productivity" : `${formatDisplayDate(currentDateStr).split(',')[0]}'s Productivity`;
+
+      const dayEl = document.getElementById('today-circles');
+      dayEl.innerHTML = '';
+      const daySlots = calendarData[currentDateStr] || {};
+      DAY_CATEGORIES.forEach(cat => {
+        const counts = countTasksForDay(daySlots, cat.tasks);
+        const total = Object.values(counts).reduce((a,b) => a+b, 0);
+        dayEl.appendChild(makeCircle(cat, counts, total));
+      });
+    }
+
+    function makeCircle(cat, counts, total) {
+      const wrap = document.createElement('div');
+      wrap.className = 'stat-circle-wrap';
+
+      const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+      const taskDefs = getTaskDefs();
+
+      // SVG donut
+      const r = 36, stroke = 7, circ = 2 * Math.PI * r;
+      let offset = 0;
+      const segments = sorted.map(([name, count]) => {
+        const t = taskDefs.find(t => t.name === name);
+        return { name, count, color: t ? t.color : cat.color };
+      });
+
+      const svgNS = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(svgNS, 'svg');
+      svg.setAttribute('width', '90'); svg.setAttribute('height', '90');
+      svg.setAttribute('viewBox', '0 0 90 90');
+
+      // bg circle
+      const bg = document.createElementNS(svgNS, 'circle');
+      bg.setAttribute('cx','45'); bg.setAttribute('cy','45'); bg.setAttribute('r', r);
+      bg.setAttribute('fill','none'); bg.setAttribute('stroke','rgba(255,255,255,0.06)');
+      bg.setAttribute('stroke-width', stroke);
+      svg.appendChild(bg);
+
+      if (total > 0) {
+        segments.forEach(seg => {
+          if (!seg.count) return;
+          const len = (seg.count / total) * circ;
+          const c = document.createElementNS(svgNS, 'circle');
+          c.setAttribute('cx','45'); c.setAttribute('cy','45'); c.setAttribute('r', r);
+          c.setAttribute('fill','none'); c.setAttribute('stroke', seg.color);
+          c.setAttribute('stroke-width', stroke);
+          c.setAttribute('stroke-dasharray', `${len} ${circ - len}`);
+          c.setAttribute('stroke-dashoffset', -offset + circ * 0.25);
+          c.setAttribute('transform', 'rotate(-90 45 45)');
+          svg.appendChild(c);
+          offset += len;
+        });
+      } else {
+        const empty = document.createElementNS(svgNS, 'circle');
+        empty.setAttribute('cx','45'); empty.setAttribute('cy','45'); empty.setAttribute('r', r);
+        empty.setAttribute('fill','none'); empty.setAttribute('stroke', cat.color);
+        empty.setAttribute('stroke-width', stroke); empty.setAttribute('opacity','0.2');
+        svg.appendChild(empty);
+      }
+
+      // number text
+      const txt = document.createElementNS(svgNS, 'text');
+      txt.setAttribute('x','45'); txt.setAttribute('y','49');
+      txt.setAttribute('text-anchor','middle'); txt.setAttribute('fill','#f0ece4');
+      txt.setAttribute('font-size','16'); txt.setAttribute('font-weight','600');
+      txt.setAttribute('font-family','DM Sans, sans-serif');
+      txt.textContent = total;
+      svg.appendChild(txt);
+
+      wrap.appendChild(svg);
+
+      const label = document.createElement('div');
+      label.className = 'stat-label';
+      label.textContent = cat.label;
+      wrap.appendChild(label);
+
+      // dropdown
+      if (sorted.some(s => s.count > 0)) {
+        const drop = document.createElement('div');
+        drop.className = 'stat-dropdown';
+        sorted.filter(s => s.count > 0).forEach(s => {
+          const item = document.createElement('div');
+          item.className = 'stat-drop-item';
+          const dot = document.createElement('span');
+          dot.className = 'stat-dot';
+          dot.style.background = (taskDefs.find(t => t.name === s.name) || {}).color || cat.color;
+          item.appendChild(dot);
+          item.appendChild(document.createTextNode(`${s.name}: ${s.count} slot${s.count>1?'s':''}`));
+          drop.appendChild(item);
+        });
+        wrap.appendChild(drop);
+
+        // toggle on tap
+        wrap.onclick = () => {
+          drop.classList.toggle('open');
+          wrap.classList.toggle('expanded');
+        };
+      }
+
+      return wrap;
+    }
+
+    // ─── ADD CUSTOM TASK ───
+    window.addCustomTask = () => {
+      const name = document.getElementById('new-task-name').value.trim();
+      if (!name) return alert('Enter a task name');
+      const scope = document.querySelector('input[name="stat-scope"]:checked')?.value || 'both';
+      const cumCat = document.getElementById('cumulative-cat').value;
+      const dayCat = document.getElementById('daily-cat').value;
+      const color = `hsl(${Math.floor(Math.random()*360)},60%,60%)`;
+      const existing = JSON.parse(localStorage.getItem('customTasks') || '[]');
+      existing.push({ name, cumCat: scope !== 'daily' ? cumCat : null, dayCat: scope !== 'cumulative' ? dayCat : null, color });
+      localStorage.setItem('customTasks', JSON.stringify(existing));
+      document.getElementById('new-task-name').value = '';
+      renderTags();
+      renderCalendar();
+    };
+
+    window.addCustomCategory = () => {
+      const name = document.getElementById('new-cat-name').value.trim();
+      if (!name) return alert('Enter a category name');
+      const scope = document.querySelector('input[name="cat-scope"]:checked')?.value || 'both';
+      const customCats = JSON.parse(localStorage.getItem('customCategories') || '[]');
+      const color = `hsl(${Math.floor(Math.random()*360)},50%,55%)`;
+      customCats.push({ name, scope, color });
+      localStorage.setItem('customCategories', JSON.stringify(customCats));
+      document.getElementById('new-cat-name').value = '';
+      alert(`Category "${name}" added!`);
+    };
+
+    window.scrollToAddTask = () => {
+      document.getElementById('add-task-section').scrollIntoView({ behavior: 'smooth' });
+    };
+  </script>
+</body>
+</html>
