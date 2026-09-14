@@ -329,9 +329,6 @@
       if (!existing.includes(tag)) {
         await set(r, [...existing, tag]);
       }
-      // deselect tag
-      selectedTag = null;
-      document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
     }
 
     function promptRemove(slot, tag) {
